@@ -15,6 +15,7 @@ class FocusDebugger {
   final _FocusOverlayController _focusOverlayController =
       _FocusOverlayController();
   FocusDebuggerConfig config = const FocusDebuggerConfig();
+  bool _active = false;
 
   /// Sets the configuration for the focus debugger.
   /// Takes effect starting with the next focus change.
@@ -24,14 +25,18 @@ class FocusDebugger {
 
   /// Activates the focus debugger.
   void activate() {
+    if (_active) return;
+    _active = true;
     WidgetsFlutterBinding.ensureInitialized();
     FocusManager.instance.addListener(_focusChanged);
   }
 
   /// Deactivates the focus debugger and removes any currently visible overlay.
   void deactivate() {
+    if (!_active) return;
     _focusOverlayController.hideOverlay();
     FocusManager.instance.removeListener(_focusChanged);
+    _active = false;
   }
 
   void _focusChanged() {
