@@ -22,13 +22,14 @@ class FocusDebuggerOverlay extends StatelessWidget {
       height: size.height,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: config.color, width: 2.0),
-          boxShadow: [
-            BoxShadow(
-              color: config.color.withOpacity(config.bgOpacity),
-              blurRadius: 4.0,
-            ),
-          ],
+          border: Border.all(color: config.color, width: 2.5),
+          
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: config.color.withOpacity(config.bgOpacity),
+          //     blurRadius: 4.0,
+          //   ),
+          // ],
         ),
       ),
     );
