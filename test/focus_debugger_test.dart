@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:focus_debugger/focus_debugger.dart';
-import 'package:focus_debugger/src/defaults.dart';
-import 'package:focus_debugger/src/focus_debugger_overlay.dart';
+import 'package:focus_debugger_flutterflow/focus_debugger_flutterflow.dart';
+import 'package:focus_debugger_flutterflow/src/defaults.dart';
+import 'package:focus_debugger_flutterflow/src/focus_debugger_overlay.dart';
 
 void main() {
   testWidgets('Shows overlay when widget receives focus', (tester) async {

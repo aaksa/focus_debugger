@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:focus_debugger/focus_debugger.dart';
+import 'package:focus_debugger_flutterflow/focus_debugger_flutterflow.dart';
 
 class FocusDebuggerOverlay extends StatelessWidget {
   const FocusDebuggerOverlay({
@@ -23,7 +23,6 @@ class FocusDebuggerOverlay extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(color: config.color, width: 2.5),
-          
           // boxShadow: [
           //   BoxShadow(
           //     color: config.color.withOpacity(config.bgOpacity),
