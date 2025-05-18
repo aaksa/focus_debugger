@@ -29,6 +29,7 @@ class FocusDebugger {
     _active = true;
     WidgetsFlutterBinding.ensureInitialized();
     FocusManager.instance.addListener(_focusChanged);
+    WidgetsBinding.instance.pointerRouter.addGlobalRoute(_handlePointerEvent);
   }
 
   /// Deactivates the focus debugger and removes any currently visible overlay.
@@ -36,6 +37,8 @@ class FocusDebugger {
     if (!_active) return;
     _focusOverlayController.hideOverlay();
     FocusManager.instance.removeListener(_focusChanged);
+    WidgetsBinding.instance.pointerRouter
+        .removeGlobalRoute(_handlePointerEvent);
     _active = false;
   }
 
@@ -45,6 +48,12 @@ class FocusDebugger {
       _focusOverlayController.showOverlay(
           primaryFocus!.context!, primaryFocus, config);
     } else {
+      _focusOverlayController.hideOverlay();
+    }
+  }
+
+  void _handlePointerEvent(PointerEvent event) {
+    if (event is PointerDownEvent) {
       _focusOverlayController.hideOverlay();
     }
   }
