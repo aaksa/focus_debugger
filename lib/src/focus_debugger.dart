@@ -63,8 +63,8 @@ class FocusDebugger {
 
         // Ensure the focus hasn't changed in the meantime
         if (currentFocus != primaryFocus) {
-          debugPrint(
-              "FocusDebugger: Focus changed before overlay could be shown.");
+          // debugPrint(
+          //     "FocusDebugger: Focus changed before overlay could be shown.");
           return;
         }
 
@@ -72,7 +72,7 @@ class FocusDebugger {
 
         // Ensure the context is still mounted
         if (context == null || !context.mounted) {
-          debugPrint("FocusDebugger: context is null or unmounted.");
+          // debugPrint("FocusDebugger: context is null or unmounted.");
           return;
         }
 
@@ -93,12 +93,12 @@ class FocusDebugger {
         if (renderObject is! RenderBox ||
             !renderObject.attached ||
             !renderObject.hasSize) {
-          debugPrint("FocusDebugger: renderObject is invalid or not ready.");
+          // debugPrint("FocusDebugger: renderObject is invalid or not ready.");
           return;
         }
 
-        debugPrint(
-            "FocusDebugger: Focused widget = ${context.widget.runtimeType}");
+        // debugPrint(
+        //     "FocusDebugger: Focused widget = ${context.widget.runtimeType}");
 
         _focusOverlayController.showOverlay(
           context,
@@ -107,11 +107,11 @@ class FocusDebugger {
         );
       });
 
-      debugPrint("Focus path:");
-      for (var node in FocusManager.instance.rootScope.traversalDescendants) {
-        debugPrint(
-            " - ${node.debugLabel ?? node.toString()} ${node.hasFocus ? '(focused)' : ''}");
-      }
+      // debugPrint("Focus path:");
+      // for (var node in FocusManager.instance.rootScope.traversalDescendants) {
+      //   debugPrint(
+      //       " - ${node.debugLabel ?? node.toString()} ${node.hasFocus ? '(focused)' : ''}");
+      // }
     } else {
       _focusOverlayController.hideOverlay();
     }
@@ -165,7 +165,7 @@ class _FocusOverlayController {
       if (renderObject is! RenderBox ||
           !renderObject.attached ||
           !renderObject.hasSize) {
-        debugPrint("FocusDebugger: Cannot show overlay — invalid RenderBox.");
+        // debugPrint("FocusDebugger: Cannot show overlay — invalid RenderBox.");
         return;
       }
 
@@ -173,8 +173,8 @@ class _FocusOverlayController {
 
       // ✅ Skip internal Flutter focus scopes
       if (context.widget.runtimeType.toString().contains('FocusScope')) {
-        debugPrint(
-            "FocusDebugger: Skipped internal widget = ${context.widget.runtimeType}");
+        // debugPrint(
+        //     "FocusDebugger: Skipped internal widget = ${context.widget.runtimeType}");
         return;
       }
 
@@ -183,8 +183,8 @@ class _FocusOverlayController {
           context.widget.runtimeType
               .toString()
               .contains('FocusScopeWithExternalFocusNode')) {
-        debugPrint(
-            "FocusDebugger: Skipping internal focus widget = ${context.widget.runtimeType}");
+        // debugPrint(
+        //     "FocusDebugger: Skipping internal focus widget = ${context.widget.runtimeType}");
         return;
       }
 
@@ -199,7 +199,7 @@ class _FocusOverlayController {
           config: config,
         ),
       );
-      Overlay.maybeOf(context)?.insert(_overlayEntry!);
+      Overlay.of(context, rootOverlay: true)?.insert(_overlayEntry!);
 
       // final overlay = Overlay.maybeOf(context);
       // if (overlay == null || !overlay.mounted) {
@@ -208,7 +208,7 @@ class _FocusOverlayController {
       // }
       // overlay.insert(_overlayEntry!);
     } catch (e, stackTrace) {
-      debugPrint("FocusDebugger error: $e\n$stackTrace");
+      // debugPrint("FocusDebugger error: $e\n$stackTrace");
     }
   }
 
@@ -218,233 +218,4 @@ class _FocusOverlayController {
     }
     _overlayEntry = null;
   }
-
-  // void hideOverlay() {
-  //   try {
-  //     if (_overlayEntry?.mounted == true) {
-  //       _overlayEntry!.remove();
-  //     }
-  //   } catch (e) {
-  //     debugPrint("FocusDebugger: Error removing overlay: $e");
-  //   } finally {
-  //     _overlayEntry = null;
-  //   }
-  // }
 }
-
-// import 'package:flutter/services.dart';
-// import 'package:flutter/widgets.dart';
-// import 'defaults.dart';
-
-// import 'focus_debugger_overlay.dart';
-
-// /// A focus debugger that listens to [FocusManager] in order to show a border around the currently focused widget.
-// /// Uses [Overlay] to show the border.
-// class FocusDebugger {
-//   FocusDebugger._();
-
-//   static FocusDebugger instance = FocusDebugger._();
-
-//   final _FocusOverlayController _focusOverlayController =
-//       _FocusOverlayController();
-//   FocusDebuggerConfig config = const FocusDebuggerConfig();
-//   bool _active = false;
-//   bool _lastInputWasKeyboard = false;
-//   final ValueNotifier<String> debugFocusedWidget =
-//       ValueNotifier<String>('No focus');
-
-//   /// Sets the configuration for the focus debugger.
-//   /// Takes effect starting with the next focus change.
-//   void setConfig(FocusDebuggerConfig config) {
-//     this.config = config;
-//   }
-
-//   /// Activates the focus debugger.
-//   void activate() {
-//     if (_active) return;
-//     _active = true;
-//     WidgetsFlutterBinding.ensureInitialized();
-//     FocusManager.instance.addListener(_focusChanged);
-//     WidgetsBinding.instance.pointerRouter.addGlobalRoute(_handlePointerEvent);
-//     RawKeyboard.instance.addListener(_handleRawKeyEvent); // <- Add this
-//   }
-
-//   /// Deactivates the focus debugger and removes any currently visible overlay.
-//   void deactivate() {
-//     if (!_active) return;
-//     _focusOverlayController.hideOverlay();
-//     FocusManager.instance.removeListener(_focusChanged);
-//     WidgetsBinding.instance.pointerRouter
-//         .removeGlobalRoute(_handlePointerEvent);
-//     RawKeyboard.instance.removeListener(_handleRawKeyEvent); // <- Add this
-//     _active = false;
-//   }
-
-//   // void _focusChanged() {
-//   //   final primaryFocus = FocusManager.instance.primaryFocus;
-
-//   //   if (primaryFocus?.context != null && _lastInputWasKeyboard) {
-//   //     _focusOverlayController.showOverlay(
-//   //       primaryFocus!.context!,
-//   //       primaryFocus,
-//   //       config,
-//   //     );
-//   //   } else {
-//   //     _focusOverlayController.hideOverlay();
-//   //   }
-//   // }
-
-//   void _focusChanged() {
-//     final primaryFocus = FocusManager.instance.primaryFocus;
-
-//     if (primaryFocus?.context != null && _lastInputWasKeyboard) {
-//       WidgetsBinding.instance.addPostFrameCallback((_) {
-//         final currentFocus = FocusManager.instance.primaryFocus;
-
-//         // ✅ Ensure the focus hasn't changed in the meantime
-//         if (currentFocus != primaryFocus) {
-//           debugPrint(
-//               "FocusDebugger: Focus changed before overlay could be shown.");
-//           return;
-//         }
-
-//         final context = primaryFocus!.context;
-
-//         // ✅ Ensure the context is still mounted
-//         if (context == null || !context.mounted) {
-//           debugPrint("FocusDebugger: context is null or unmounted.");
-//           return;
-//         }
-
-//         final renderObject = context.findRenderObject();
-
-//         // ✅ Ensure renderObject is usable
-//         if (renderObject is! RenderBox ||
-//             !renderObject.attached ||
-//             !renderObject.hasSize) {
-//           debugPrint("FocusDebugger: renderObject is invalid or not ready.");
-//           return;
-//         }
-
-//         // ✅ Log the widget for debugging
-//         debugPrint(
-//             "FocusDebugger: Focused widget = ${context.widget.runtimeType}");
-
-//         _focusOverlayController.showOverlay(
-//           context,
-//           primaryFocus,
-//           config,
-//         );
-//       });
-//     } else {
-//       _focusOverlayController.hideOverlay();
-//     }
-//   }
-
-//   void _handlePointerEvent(PointerEvent event) {
-//     _lastInputWasKeyboard = false;
-//     if (event is PointerDownEvent) {
-//       _focusOverlayController.hideOverlay();
-//       FocusManager.instance.primaryFocus?.unfocus();
-
-//       // Safety net: clear overlay if focus still misbehaves
-//       Future.delayed(const Duration(milliseconds: 1), () {
-//         if (!FocusManager.instance.primaryFocus!.hasFocus ?? true) {
-//           _focusOverlayController.hideOverlay();
-//         }
-//       });
-//     }
-//   }
-
-//   void _handleRawKeyEvent(RawKeyEvent event) {
-//     if (event is RawKeyDownEvent) {
-//       _lastInputWasKeyboard = true;
-//     }
-//   }
-// }
-
-// class FocusDebuggerConfig {
-//   const FocusDebuggerConfig({
-//     this.color = defaultColor,
-//     this.bgOpacity = 0.5,
-//   });
-
-//   final Color color;
-//   final double bgOpacity;
-// }
-
-// class _FocusOverlayController {
-//   OverlayEntry? _overlayEntry;
-
-//   // void showOverlay(
-//   //     BuildContext context, FocusNode node, FocusDebuggerConfig config) {
-//   //   _overlayEntry?.remove();
-
-//   //   final renderObject = node.context!.findRenderObject() as RenderBox;
-//   //   if (!renderObject.hasSize) {
-//   //     return;
-//   //   }
-
-//   //   // Calculate the position and size of the focused widget.
-//   //   final offset = renderObject.localToGlobal(Offset.zero);
-//   //   final size = renderObject.size;
-//   //   if (size.width == 0 || size.height == 0) return;
-
-//   //   _overlayEntry = OverlayEntry(
-//   //     builder: (context) => FocusDebuggerOverlay(
-//   //       offset: offset,
-//   //       size: size,
-//   //       config: config,
-//   //     ),
-//   //   );
-
-//   //   // Insert the OverlayEntry into the overlay.
-//   //   Overlay.maybeOf(context)?.insert(_overlayEntry!);
-//   // }
-
-//   void showOverlay(
-//       BuildContext context, FocusNode node, FocusDebuggerConfig config) {
-//     _overlayEntry?.remove();
-
-//     try {
-//       final renderObject = node.context?.findRenderObject();
-
-//       if (renderObject is! RenderBox ||
-//           !renderObject.attached ||
-//           !renderObject.hasSize) {
-//         debugPrint("FocusDebugger: Cannot show overlay — invalid RenderBox.");
-//         return;
-//       }
-
-//       final size = renderObject.size;
-//       if (size.width == 0 || size.height == 0) return;
-
-//       final offset = renderObject.localToGlobal(Offset.zero);
-
-//       _overlayEntry = OverlayEntry(
-//         builder: (context) => FocusDebuggerOverlay(
-//           offset: offset,
-//           size: size,
-//           config: config,
-//         ),
-//       );
-
-//       final overlay = Overlay.maybeOf(context);
-//       if (overlay == null) {
-//         debugPrint("FocusDebugger: Overlay not found in context.");
-//         return;
-//       }
-
-//       overlay.insert(_overlayEntry!);
-//     } catch (e, stackTrace) {
-//       debugPrint("FocusDebugger error: $e\n$stackTrace");
-//     }
-//   }
-
-//   void hideOverlay() {
-//     if (_overlayEntry?.mounted == true) {
-//       _overlayEntry!.remove();
-//     }
-//     _overlayEntry = null;
-//   }
-// }
