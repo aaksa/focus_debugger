@@ -59,11 +59,12 @@ class FocusDebugger {
   void _focusChanged() {
     final primaryFocus = FocusManager.instance.primaryFocus;
 
-    // Only show overlay if focus was triggered by keyboard (e.g., via Tab)
-    if (primaryFocus?.context != null &&
-        FocusManager.instance.highlightMode == FocusHighlightMode.traditional) {
+    if (primaryFocus?.context != null && _lastInputWasKeyboard) {
       _focusOverlayController.showOverlay(
-          primaryFocus!.context!, primaryFocus, config);
+        primaryFocus!.context!,
+        primaryFocus,
+        config,
+      );
     } else {
       _focusOverlayController.hideOverlay();
     }
