@@ -48,9 +48,13 @@ class FocusDebugger {
 
   // void _focusChanged() {
   //   final primaryFocus = FocusManager.instance.primaryFocus;
-  //   if (primaryFocus?.context != null) {
+
+  //   if (primaryFocus?.context != null && _lastInputWasKeyboard) {
   //     _focusOverlayController.showOverlay(
-  //         primaryFocus!.context!, primaryFocus, config);
+  //       primaryFocus!.context!,
+  //       primaryFocus,
+  //       config,
+  //     );
   //   } else {
   //     _focusOverlayController.hideOverlay();
   //   }
@@ -60,11 +64,13 @@ class FocusDebugger {
     final primaryFocus = FocusManager.instance.primaryFocus;
 
     if (primaryFocus?.context != null && _lastInputWasKeyboard) {
-      _focusOverlayController.showOverlay(
-        primaryFocus!.context!,
-        primaryFocus,
-        config,
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusOverlayController.showOverlay(
+          primaryFocus!.context!,
+          primaryFocus,
+          config,
+        );
+      });
     } else {
       _focusOverlayController.hideOverlay();
     }
@@ -74,6 +80,7 @@ class FocusDebugger {
     if (event is PointerDownEvent) {
       _lastInputWasKeyboard = false; // mouse or touch
       _focusOverlayController.hideOverlay();
+      FocusManager.instance.primaryFocus?.unfocus(); // <- Add this line
     }
   }
 
@@ -109,6 +116,7 @@ class _FocusOverlayController {
     // Calculate the position and size of the focused widget.
     final offset = renderObject.localToGlobal(Offset.zero);
     final size = renderObject.size;
+    if (size.width == 0 || size.height == 0) return;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => FocusDebuggerOverlay(
