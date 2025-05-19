@@ -1,7 +1,8 @@
-library focus_debugger;
+library focus_debugger_flutterflow;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:focus_debugger/src/defaults.dart';
+import 'defaults.dart';
 
 import 'focus_debugger_overlay.dart';
 
@@ -16,6 +17,7 @@ class FocusDebugger {
       _FocusOverlayController();
   FocusDebuggerConfig config = const FocusDebuggerConfig();
   bool _active = false;
+  bool _lastInputWasKeyboard = false;
 
   /// Sets the configuration for the focus debugger.
   /// Takes effect starting with the next focus change.
@@ -30,6 +32,7 @@ class FocusDebugger {
     WidgetsFlutterBinding.ensureInitialized();
     FocusManager.instance.addListener(_focusChanged);
     WidgetsBinding.instance.pointerRouter.addGlobalRoute(_handlePointerEvent);
+    RawKeyboard.instance.addListener(_handleRawKeyEvent); // <- Add this
   }
 
   /// Deactivates the focus debugger and removes any currently visible overlay.
@@ -39,12 +42,26 @@ class FocusDebugger {
     FocusManager.instance.removeListener(_focusChanged);
     WidgetsBinding.instance.pointerRouter
         .removeGlobalRoute(_handlePointerEvent);
+    RawKeyboard.instance.removeListener(_handleRawKeyEvent); // <- Add this
     _active = false;
   }
 
+  // void _focusChanged() {
+  //   final primaryFocus = FocusManager.instance.primaryFocus;
+  //   if (primaryFocus?.context != null) {
+  //     _focusOverlayController.showOverlay(
+  //         primaryFocus!.context!, primaryFocus, config);
+  //   } else {
+  //     _focusOverlayController.hideOverlay();
+  //   }
+  // }
+
   void _focusChanged() {
     final primaryFocus = FocusManager.instance.primaryFocus;
-    if (primaryFocus?.context != null) {
+
+    // Only show overlay if focus was triggered by keyboard (e.g., via Tab)
+    if (primaryFocus?.context != null &&
+        FocusManager.instance.highlightMode == FocusHighlightMode.traditional) {
       _focusOverlayController.showOverlay(
           primaryFocus!.context!, primaryFocus, config);
     } else {
@@ -54,7 +71,14 @@ class FocusDebugger {
 
   void _handlePointerEvent(PointerEvent event) {
     if (event is PointerDownEvent) {
+      _lastInputWasKeyboard = false; // mouse or touch
       _focusOverlayController.hideOverlay();
+    }
+  }
+
+  void _handleRawKeyEvent(RawKeyEvent event) {
+    if (event is RawKeyDownEvent) {
+      _lastInputWasKeyboard = true;
     }
   }
 }
