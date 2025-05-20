@@ -199,7 +199,7 @@ class _FocusOverlayController {
           config: config,
         ),
       );
-      Overlay.of(context, rootOverlay: true)?.insert(_overlayEntry!);
+      Overlay.maybeOf(context)?.insert(_overlayEntry!);
 
       // final overlay = Overlay.maybeOf(context);
       // if (overlay == null || !overlay.mounted) {
