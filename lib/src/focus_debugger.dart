@@ -188,8 +188,23 @@ class _FocusOverlayController {
         return;
       }
 
-      if (size.width == 0 || size.height == 0) return;
+      final screenSize = MediaQuery.of(context).size;
 
+      // debugPrint(
+      //     "screen width ${screenSize.width}, height ${screenSize.height}");
+      // print(size);
+      // debugPrint("width ${size.width.toString()}");
+      // debugPrint("heigt ${size.height.toString()}");
+
+// Skip if widget takes the full screen (or nearly full screen)
+      if ((size.width >= screenSize.width &&
+              size.height >= screenSize.height) ||
+          size.width == 0 ||
+          size.height == 0) {
+        // debugPrint(
+        //     "FocusDebugger: Skipping overlay for full-screen or zero-size widget.");
+        return;
+      }
       final offset = renderObject.localToGlobal(Offset.zero);
 
       _overlayEntry = OverlayEntry(
@@ -200,15 +215,8 @@ class _FocusOverlayController {
         ),
       );
       Overlay.maybeOf(context)?.insert(_overlayEntry!);
-
-      // final overlay = Overlay.maybeOf(context);
-      // if (overlay == null || !overlay.mounted) {
-      //   debugPrint("FocusDebugger: Overlay not found or not mounted.");
-      //   return;
-      // }
-      // overlay.insert(_overlayEntry!);
     } catch (e, stackTrace) {
-      // debugPrint("FocusDebugger error: $e\n$stackTrace");
+      debugPrint("FocusDebugger error: $e\n$stackTrace");
     }
   }
 
@@ -218,4 +226,16 @@ class _FocusOverlayController {
     }
     _overlayEntry = null;
   }
+
+  // void hideOverlay() {
+  //   try {
+  //     if (_overlayEntry?.mounted == true) {
+  //       _overlayEntry!.remove();
+  //     }
+  //   } catch (e) {
+  //     debugPrint("FocusDebugger: Error removing overlay: $e");
+  //   } finally {
+  //     _overlayEntry = null;
+  //   }
+  // }
 }
