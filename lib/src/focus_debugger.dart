@@ -23,7 +23,7 @@ class FocusDebugger {
   bool _lastInputWasKeyboard = false;
   final ValueNotifier<String> debugFocusedWidget =
       ValueNotifier<String>('No focus');
-  bool _whileMoving = false;
+  bool _pointerScrollInProgress = false;
 
   /// Sets the configuration for the focus debugger.
   /// Takes effect starting with the next focus change.
@@ -58,72 +58,43 @@ class FocusDebugger {
     _active = false;
   }
 
+  Timer? _focusChangeDebounce;
+
   void _focusChanged() {
-    debugPrint("Focus changeed");
-    final primaryFocus = FocusManager.instance.primaryFocus;
+    _focusChangeDebounce?.cancel();
 
-    if (primaryFocus?.context != null && _lastInputWasKeyboard) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final currentFocus = FocusManager.instance.primaryFocus;
+    // Don’t act if scroll or pointer activity is ongoing
+    if (!_lastInputWasKeyboard || _pointerScrollInProgress) {
+      _focusOverlayController.hideOverlay();
+      return;
+    }
 
-        // Ensure the focus hasn't changed in the meantime
-        if (currentFocus != primaryFocus) {
-          // debugPrint(
-          //     "FocusDebugger: Focus changed before overlay could be shown.");
-          return;
-        }
+    // Delay application slightly in case of rapid pointer or scroll activity
+    _focusChangeDebounce = Timer(const Duration(milliseconds: 150), () {
+      final primaryFocus = FocusManager.instance.primaryFocus;
 
-        final context = primaryFocus!.context;
-
-        // Ensure the context is still mounted
-        if (context == null || !context.mounted) {
-          // debugPrint("FocusDebugger: context is null or unmounted.");
-          return;
-        }
-
-        final widget = context.widget;
-
-        // 🔐 Skip drawing overlay for generic containers or FocusScope/Focus widget
-        // if (widget is Focus ||
-        //     widget is FocusScope ||
-        //     widget.runtimeType.toString().contains('Semantics')) {
-        //   debugPrint(
-        //       "FocusDebugger: Skipped widget of type ${widget.runtimeType}");
-        //   _focusOverlayController.hideOverlay();
-        //   return;
-        // }
-
-        final renderObject = context.findRenderObject();
+      if (primaryFocus?.context != null && primaryFocus!.context!.mounted) {
+        final renderObject = primaryFocus.context!.findRenderObject();
 
         if (renderObject is! RenderBox ||
             !renderObject.attached ||
             !renderObject.hasSize) {
-          // debugPrint("FocusDebugger: renderObject is invalid or not ready.");
           return;
         }
 
-        // debugPrint(
-        //     "FocusDebugger: Focused widget = ${context.widget.runtimeType}");
-
         _focusOverlayController.showOverlay(
-          context,
+          primaryFocus.context!,
           primaryFocus,
           config,
         );
-      });
-
-      // debugPrint("Focus path:");
-      // for (var node in FocusManager.instance.rootScope.traversalDescendants) {
-      //   debugPrint(
-      //       " - ${node.debugLabel ?? node.toString()} ${node.hasFocus ? '(focused)' : ''}");
-      // }
-    } else {
-      _focusOverlayController.hideOverlay();
-    }
+      }
+    });
   }
 
   void _handlePointerEvent(PointerEvent event) {
     if (event.runtimeType.toString() == "PointerScrollEvent") {
+      _pointerScrollInProgress = true;
+
       _focusOverlayController.hideOverlay();
       // Cancel any previous timer
       _scrollEndTimer?.cancel();
@@ -131,6 +102,7 @@ class FocusDebugger {
       // Start a new timer that fires after 500ms (adjust delay as needed)
       _scrollEndTimer = Timer(const Duration(milliseconds: 200), () {
         // Called after user stops scrolling for 500ms
+        _pointerScrollInProgress = false;
         refreshOverlay();
       });
     }
