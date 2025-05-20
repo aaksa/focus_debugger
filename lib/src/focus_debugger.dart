@@ -23,6 +23,7 @@ class FocusDebugger {
   bool _lastInputWasKeyboard = false;
   final ValueNotifier<String> debugFocusedWidget =
       ValueNotifier<String>('No focus');
+  bool _whileMoving = false;
 
   /// Sets the configuration for the focus debugger.
   /// Takes effect starting with the next focus change.
@@ -58,6 +59,7 @@ class FocusDebugger {
   }
 
   void _focusChanged() {
+    debugPrint("Focus changeed");
     final primaryFocus = FocusManager.instance.primaryFocus;
 
     if (primaryFocus?.context != null && _lastInputWasKeyboard) {
@@ -121,20 +123,22 @@ class FocusDebugger {
   }
 
   void _handlePointerEvent(PointerEvent event) {
-    if (event is PointerDownEvent) {
-      _lastInputWasKeyboard = false;
-
+    if (event.runtimeType.toString() == "PointerScrollEvent") {
       _focusOverlayController.hideOverlay();
+      // Cancel any previous timer
+      _scrollEndTimer?.cancel();
+
+      // Start a new timer that fires after 500ms (adjust delay as needed)
+      _scrollEndTimer = Timer(const Duration(milliseconds: 200), () {
+        // Called after user stops scrolling for 500ms
+        refreshOverlay();
+      });
     }
 
-    // Cancel any previous timer
-    _scrollEndTimer?.cancel();
-
-    // Start a new timer that fires after 500ms (adjust delay as needed)
-    _scrollEndTimer = Timer(const Duration(milliseconds: 100), () {
-      // Called after user stops scrolling for 500ms
-      refreshOverlay();
-    });
+    if (event is PointerDownEvent) {
+      _lastInputWasKeyboard = false;
+      _focusOverlayController.hideOverlay();
+    }
   }
   // void _handlePointerEvent(PointerEvent event) {
   //   _lastInputWasKeyboard = false;
@@ -235,13 +239,31 @@ class _FocusOverlayController {
       }
       final offset = renderObject.localToGlobal(Offset.zero);
 
+      // _overlayEntry = OverlayEntry(
+      //   builder: (context) => FocusDebuggerOverlay(
+      //     offset: offset,
+      //     size: size,
+      //     config: config,
+      //   ),
+      // );
       _overlayEntry = OverlayEntry(
-        builder: (context) => FocusDebuggerOverlay(
-          offset: offset,
-          size: size,
-          config: config,
+        builder: (context) => Stack(
+          children: [
+            Positioned(
+              left: offset.dx,
+              top: offset.dy,
+              width: size.width,
+              height: size.height,
+              child: IgnorePointer(
+                ignoringSemantics: true,
+                ignoring: true,
+                child: FocusDebuggerOverlay(config: config),
+              ),
+            ),
+          ],
         ),
       );
+
       Overlay.maybeOf(context)?.insert(_overlayEntry!);
     } catch (e, stackTrace) {
       debugPrint("FocusDebugger error: $e\n$stackTrace");
