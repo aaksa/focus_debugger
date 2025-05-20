@@ -1,5 +1,7 @@
 library focus_debugger_flutterflow;
 
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'defaults.dart';
@@ -10,6 +12,7 @@ import 'focus_debugger_overlay.dart';
 /// Uses [Overlay] to show the border.
 class FocusDebugger {
   FocusDebugger._();
+  Timer? _scrollEndTimer;
 
   static FocusDebugger instance = FocusDebugger._();
 
@@ -118,10 +121,36 @@ class FocusDebugger {
   }
 
   void _handlePointerEvent(PointerEvent event) {
-    _lastInputWasKeyboard = false;
     if (event is PointerDownEvent) {
+      _lastInputWasKeyboard = false;
+
       _focusOverlayController.hideOverlay();
-      // FocusManager.instance.primaryFocus?.unfocus();
+    }
+
+    // Cancel any previous timer
+    _scrollEndTimer?.cancel();
+
+    // Start a new timer that fires after 500ms (adjust delay as needed)
+    _scrollEndTimer = Timer(const Duration(milliseconds: 100), () {
+      // Called after user stops scrolling for 500ms
+      refreshOverlay();
+    });
+  }
+  // void _handlePointerEvent(PointerEvent event) {
+  //   _lastInputWasKeyboard = false;
+  //   if (event is PointerDownEvent) {
+  //     _focusOverlayController.hideOverlay();
+  //     // FocusManager.instance.primaryFocus?.unfocus();
+  //   }
+  // }
+
+  void refreshOverlay() {
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    final context = primaryFocus?.context;
+
+    if (context != null && context.mounted && _lastInputWasKeyboard) {
+      _focusOverlayController.hideOverlay();
+      _focusOverlayController.showOverlay(context, primaryFocus!, config);
     }
   }
 
@@ -130,7 +159,6 @@ class FocusDebugger {
       // Activate only on Tab key
       if (event.logicalKey == LogicalKeyboardKey.tab) {
         _lastInputWasKeyboard = true;
-
         if (!_active) {
           _activateInternal();
         }
