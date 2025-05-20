@@ -2,6 +2,7 @@ library focus_debugger_flutterflow;
 
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'defaults.dart';
@@ -92,7 +93,7 @@ class FocusDebugger {
   }
 
   void _handlePointerEvent(PointerEvent event) {
-    if (event.runtimeType.toString() == "PointerScrollEvent") {
+    if (event is PointerScrollEvent) {
       _pointerScrollInProgress = true;
 
       _focusOverlayController.hideOverlay();
@@ -112,6 +113,7 @@ class FocusDebugger {
       _focusOverlayController.hideOverlay();
     }
   }
+
   // void _handlePointerEvent(PointerEvent event) {
   //   _lastInputWasKeyboard = false;
   //   if (event is PointerDownEvent) {
