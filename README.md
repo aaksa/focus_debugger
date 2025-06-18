@@ -8,7 +8,7 @@ Useful for debugging keyboard navigation or AndroidTV D-pad navigation, TV remot
 ## Usage
 
 ```dart
-import 'package:focus_debugger/focus_debugger.dart';
+import 'package:focus_debugger_flutterflow/focus_debugger_flutterflow.dart';
 
 Future main() async {
   FocusDebugger.instance.activate();
