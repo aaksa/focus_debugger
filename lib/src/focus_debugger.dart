@@ -14,6 +14,7 @@ import 'focus_debugger_overlay.dart';
 class FocusDebugger {
   FocusDebugger._();
   Timer? _scrollEndTimer;
+  Timer? _keyboardFlagTimer;
 
   static FocusDebugger instance = FocusDebugger._();
 
@@ -56,6 +57,8 @@ class FocusDebugger {
     WidgetsBinding.instance.pointerRouter
         .removeGlobalRoute(_handlePointerEvent);
     RawKeyboard.instance.removeListener(_handleRawKeyEvent);
+    _keyboardFlagTimer?.cancel();
+    _scrollEndTimer?.cancel();
     _active = false;
   }
 
@@ -64,14 +67,20 @@ class FocusDebugger {
   void _focusChanged() {
     _focusChangeDebounce?.cancel();
 
-    // Don’t act if scroll or pointer activity is ongoing
+    // Don't act if scroll or pointer activity is ongoing
     if (!_lastInputWasKeyboard || _pointerScrollInProgress) {
       _focusOverlayController.hideOverlay();
       return;
     }
 
     // Delay application slightly in case of rapid pointer or scroll activity
-    _focusChangeDebounce = Timer(const Duration(milliseconds: 150), () {
+    _focusChangeDebounce = Timer(const Duration(milliseconds: 200), () {
+      // Double-check keyboard flag again after delay
+      if (!_lastInputWasKeyboard) {
+        _focusOverlayController.hideOverlay();
+        return;
+      }
+
       final primaryFocus = FocusManager.instance.primaryFocus;
 
       if (primaryFocus?.context != null && primaryFocus!.context!.mounted) {
@@ -93,34 +102,30 @@ class FocusDebugger {
   }
 
   void _handlePointerEvent(PointerEvent event) {
+    // Only permanently hide overlay on actual clicks
+    if (event is PointerDownEvent) {
+      _lastInputWasKeyboard = false;
+      _keyboardFlagTimer?.cancel();
+      _focusOverlayController.hideOverlay();
+    }
+
     if (event is PointerScrollEvent) {
       _pointerScrollInProgress = true;
-
+      
+      // Temporarily hide overlay during scrolling (but keep _lastInputWasKeyboard = true)
       _focusOverlayController.hideOverlay();
+      
       // Cancel any previous timer
       _scrollEndTimer?.cancel();
 
-      // Start a new timer that fires after 500ms (adjust delay as needed)
+      // Start a new timer that fires after 200ms
       _scrollEndTimer = Timer(const Duration(milliseconds: 200), () {
-        // Called after user stops scrolling for 500ms
+        // Called after user stops scrolling for 200ms
         _pointerScrollInProgress = false;
-        refreshOverlay();
+        refreshOverlay(); // This will show overlay again if _lastInputWasKeyboard is still true
       });
     }
-
-    if (event is PointerDownEvent) {
-      _lastInputWasKeyboard = false;
-      _focusOverlayController.hideOverlay();
-    }
   }
-
-  // void _handlePointerEvent(PointerEvent event) {
-  //   _lastInputWasKeyboard = false;
-  //   if (event is PointerDownEvent) {
-  //     _focusOverlayController.hideOverlay();
-  //     // FocusManager.instance.primaryFocus?.unfocus();
-  //   }
-  // }
 
   void refreshOverlay() {
     final primaryFocus = FocusManager.instance.primaryFocus;
@@ -140,6 +145,16 @@ class FocusDebugger {
         if (!_active) {
           _activateInternal();
         }
+
+        // Reset keyboard flag after 3 seconds to prevent stale state
+        _keyboardFlagTimer?.cancel();
+        _keyboardFlagTimer = Timer(const Duration(seconds: 3), () {
+          _lastInputWasKeyboard = false;
+        });
+      } else {
+        // Any other key press should not trigger the overlay
+        _lastInputWasKeyboard = false;
+        _keyboardFlagTimer?.cancel();
       }
     }
   }
