@@ -1,6 +1,6 @@
 name: focus_debugger_flutterflow
 description: Visually debug where focus is in your Flutter app.
-version: 0.0.10
+version: 0.0.12
 repository: https://github.com/aaksa/focus_debugger_flutterflow
 
 environment:
